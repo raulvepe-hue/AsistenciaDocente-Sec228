@@ -638,13 +638,13 @@
           <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl">
             <span class="text-xs font-semibold text-slate-500 uppercase">Asistencia Esperada</span>
             <p class="text-2xl font-black text-slate-800 mt-1">${stats.esperadas}</p>
-            <span class="text-[11px] text-slate-400">Módulos programados</span>
+            <span class="text-[11px] text-slate-400">Clases programadas</span>
           </div>
 
           <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-xl">
             <span class="text-xs font-semibold text-emerald-700 uppercase">Asistencia Real</span>
             <p class="text-2xl font-black text-emerald-700 mt-1">${stats.real}</p>
-            <span class="text-[11px] text-emerald-600">Módulos atendidos</span>
+            <span class="text-[11px] text-emerald-600">Clases atendidas</span>
           </div>
 
           <div class="bg-red-50 border border-red-200 p-4 rounded-xl">
@@ -756,7 +756,7 @@
           labels: labels,
           datasets: [
             {
-              label: "Asistencia Esperada (Módulos)",
+              label: "Asistencia Esperada (Clases)",
               data: dataEsperada,
               backgroundColor: "rgba(99, 102, 241, 0.75)",
               borderColor: "rgb(79, 70, 229)",
@@ -764,7 +764,7 @@
               borderRadius: 6
             },
             {
-              label: "Asistencia Real (Módulos)",
+              label: "Asistencia Real (Clases)",
               data: dataReal,
               backgroundColor: "rgba(16, 185, 129, 0.8)",
               borderColor: "rgb(5, 150, 105)",
@@ -772,7 +772,7 @@
               borderRadius: 6
             },
             {
-              label: "Inasistencias (Módulos)",
+              label: "Inasistencias (Clases)",
               data: dataFaltas,
               backgroundColor: "rgba(239, 68, 68, 0.85)",
               borderColor: "rgb(220, 38, 38)",
