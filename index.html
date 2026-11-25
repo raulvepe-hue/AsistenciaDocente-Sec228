@@ -62,7 +62,7 @@
       <!-- TARJETA 1: FILTROS DE CONSULTA -->
       <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
         <h2 class="text-sm font-bold uppercase tracking-wider text-indigo-900 mb-4 flex items-center gap-2 border-b border-slate-100 pb-2">
-          <i class="fa-regular fa-calendar-check text-indigo-600"></i> Consultar Incidencia
+          <i class="fa-regular fa-calendar-check text-indigo-600"></i> Selecciona para Consultar Incidencia
         </h2>
 
         <div class="space-y-4">
@@ -93,46 +93,46 @@
         <nav class="space-y-1.5" id="menuOptions">
           <button data-view="1" class="menu-btn active w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold border border-transparent hover:bg-slate-50 text-slate-700 flex items-center gap-2.5 transition">
             <i class="fa-solid fa-chalkboard-user text-indigo-600 w-4 text-center"></i>
-            <span>1. Grupos / clase por cubrir</span>
+            <span>Grupos / Clase por cubrir</span>
           </button>
 
           <button data-view="2" class="menu-btn w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold border border-transparent hover:bg-slate-50 text-slate-700 flex items-center gap-2.5 transition">
             <i class="fa-solid fa-percent text-emerald-600 w-4 text-center"></i>
-            <span>2. % Asistencia diaria</span>
+            <span>Porcentaje Asistencia diaria</span>
           </button>
 
           <button data-view="3" class="menu-btn w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold border border-transparent hover:bg-slate-50 text-slate-700 flex items-center gap-2.5 transition">
             <i class="fa-solid fa-calendar-week text-blue-600 w-4 text-center"></i>
-            <span>3. % Asistencia semana concluida</span>
+            <span>Porcentaje Asistencia semana concluida</span>
           </button>
 
           <button data-view="4" class="menu-btn w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold border border-transparent hover:bg-slate-50 text-slate-700 flex items-center gap-2.5 transition">
             <i class="fa-solid fa-calendar-days text-purple-600 w-4 text-center"></i>
-            <span>4. % Asistencia mensual</span>
+            <span>Porcentaje Asistencia mensual</span>
           </button>
 
           <hr class="my-2 border-slate-100">
 
           <button data-view="5" class="menu-btn w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold border border-transparent hover:bg-slate-50 text-slate-700 flex items-center gap-2.5 transition">
             <i class="fa-solid fa-chart-column text-amber-600 w-4 text-center"></i>
-            <span>5. Gráfico asistencia al día</span>
+            <span>Gráfico asistencia al día</span>
           </button>
 
           <button data-view="6" class="menu-btn w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold border border-transparent hover:bg-slate-50 text-slate-700 flex items-center gap-2.5 transition">
             <i class="fa-solid fa-chart-simple text-cyan-600 w-4 text-center"></i>
-            <span>6. Gráfico semana concluida</span>
+            <span>Gráfico semana concluida</span>
           </button>
 
           <button data-view="7" class="menu-btn w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold border border-transparent hover:bg-slate-50 text-slate-700 flex items-center gap-2.5 transition">
             <i class="fa-solid fa-chart-bar text-pink-600 w-4 text-center"></i>
-            <span>7. Gráfico asistencia mensual</span>
+            <span>Gráfico asistencia mensual</span>
           </button>
 
           <hr class="my-2 border-slate-100">
 
           <button data-view="8" class="menu-btn w-full text-left px-3 py-3 rounded-xl text-xs font-bold border border-indigo-200 bg-indigo-50/70 hover:bg-indigo-100 text-indigo-800 flex items-center gap-2.5 transition">
             <i class="fa-solid fa-circle-plus text-indigo-600 w-4 text-center text-sm"></i>
-            <span>8. Agregar incidencia docente</span>
+            <span>Agregar incidencia docente</span>
           </button>
         </nav>
       </div>
@@ -603,8 +603,8 @@
       container.innerHTML = `
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4 mb-5">
           <div>
-            <h2 class="text-lg font-bold text-slate-800">Concentrado Global de Grupos por Cubrir</h2>
-            <p class="text-xs text-slate-500">Fecha consultada: <strong>${formatDateReadable(dateVal)}</strong></p>
+            <h2 class="text-lg font-bold text-slate-800">Concentrado de grupos por cubrir</h2>
+            <p class="text-xs text-slate-500">Fecha de consulta: <strong>${formatDateReadable(dateVal)}</strong></p>
           </div>
           <button onclick="window.print()" class="no-print bg-slate-800 hover:bg-slate-700 text-white text-xs px-3 py-2 rounded-lg flex items-center gap-1.5 self-start">
             <i class="fa-solid fa-print"></i> Imprimir Reporte
