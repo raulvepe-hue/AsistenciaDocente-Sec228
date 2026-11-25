@@ -3,263 +3,989 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Control de Inasistencias Docentes</title>
+  <title>Control de Coberturas e Inasistencias - Sec. 228</title>
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
+  <!-- Chart.js para gráficos interactivos -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
-    /* Estilos exclusivos para la impresión / Guardado en PDF */
     @media print {
-      body {
-        background-color: white !important;
-        color: black !important;
-      }
-      header, .no-print {
-        display: none !important;
-      }
-      main {
-        display: block !important;
-        max-width: 100% !important;
-        margin: 0 !important;
-        padding: 0 !important;
-      }
-      .print-only-header {
-        display: block !important;
-        margin-bottom: 20px;
-        border-bottom: 2px solid #333;
-        padding-bottom: 10px;
-      }
-      #resultsSection {
-        border: none !important;
-        box-shadow: none !important;
-        padding: 0 !important;
-      }
-      .card-item {
-        border: 1px solid #ccc !important;
-        background-color: #f9f9f9 !important;
-        break-inside: avoid;
-      }
+      .no-print { display: none !important; }
+      body { background: white !important; }
+      .print-full { width: 100% !important; max-width: 100% !important; box-shadow: none !important; border: none !important; }
     }
-    
-    .print-only-header {
-      display: none;
+    .menu-btn.active {
+      background: linear-gradient(to right, #4338ca, #6d28d9);
+      color: #ffffff;
+      border-color: #4338ca;
+      box-shadow: 0 4px 12px rgba(67, 56, 202, 0.25);
+    }
+    .menu-btn.active i {
+      color: #ffffff !important;
     }
   </style>
 </head>
-<body class="bg-slate-100 text-slate-800 font-sans min-h-screen">
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col font-sans">
 
-  <header class="bg-indigo-700 text-white shadow-lg py-4 px-6 mb-8">
-    <div class="max-w-6xl mx-auto flex justify-start items-start text-start">
-  <h1 class="text-2xl font-bold text-start w-full">
-    <img src="escudo.png" alt="Escudo Escuela" class="h-16 w-auto inline-block mr-2"><span class="text-3xl">Escuela Secundaria No 228. "Edmundo O' Gorman"</span><br><span class="italic text-sm">Control de coberturas por inasistencias docentes</span>
-  </h1>
-</div>
-  </header>
-
-  <main class="max-w-6xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-6">
-    
-    <!-- Encabezado visible solo en la impresión/PDF -->
-    <div class="print-only-header col-span-3">
-      <h1 class="text-2xl font-bold text-slate-900">Reporte de disciplinas y grupos desatendidos</h1>
-      <p class="text-sm text-slate-600" id="printDocenteInfo">Docente: --</p>
-      <p class="text-sm text-slate-600" id="printFechaInfo">Fecha: --</p>
-    </div>
-
-    <!-- Panel de Filtro/Inasistencia (Se oculta al imprimir) -->
-    <section class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 h-fit no-print">
-      <h2 class="text-lg font-semibold text-slate-700 mb-4 flex items-center gap-2">
-        <i class="fa-solid fa-calendar-minus text-indigo-600"></i> Consultar incidencia:
-      </h2>
-      
-      <form id="absenceForm" class="space-y-4">
+  <!-- ENCABEZADO INSTITUCIONAL -->
+  <header class="bg-gradient-to-r from-indigo-900 via-indigo-800 to-purple-900 text-white shadow-lg py-4 px-6">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+      <div class="flex items-center gap-4">
+        <img src="escudo.png" alt="Escudo Secundaria 228" class="h-14 w-auto object-contain bg-white/10 p-1 rounded-lg" onerror="this.style.display='none'">
         <div>
-          <label class="block text-sm font-medium text-slate-600 mb-1">Fecha de inasistencia</label>
-          <input type="date" id="selectDate" required class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 outline-none">
+          <h1 class="text-lg md:text-2xl font-bold leading-tight">
+            Escuela Secundaria 228. "Edmundo O'Gorman"
+          </h1>
+          <p class="text-indigo-200 text-xs md:text-sm font-medium">
+            Visor de Asistencia Docente y Control de Coberturas
+          </p>
         </div>
-
-        <div>
-          <label class="block text-sm font-medium text-slate-600 mb-1">Docente ausente</label>
-          <select id="selectTeacher" required class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 outline-none">
-            <option value="">Cargando plantilla docente...</option>
-          </select>
-        </div>
-
-        <button type="submit" id="searchBtn" disabled class="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-white font-medium py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2">
-          <i class="fa-solid fa-search"></i> Buscar clases afectadas
-        </button>
-      </form>
-    </section>
-
-    <!-- Panel de Resultados -->
-    <section id="resultsSection" class="md:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-      <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-100">
-        <div>
-          <h2 class="text-lg font-semibold text-slate-700">Disciplinas y grupos desatendidos</h2>
-          <span id="dayLabel" class="text-sm font-medium text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md mt-1 inline-block"></span>
-        </div>
-
-        <!-- Botón para imprimir / PDF -->
-        <button id="printBtn" onclick="window.print()" class="no-print hidden bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
-          <i class="fa-solid fa-file-pdf"></i> Imprimir / Guardar PDF
-        </button>
       </div>
 
-      <div id="resultsContainer" class="space-y-3">
-        <p class="text-slate-400 text-center py-8">Cargando información del plantel desde Google Sheets...</p>
+      <div class="flex items-center gap-3 no-print">
+        <button onclick="cargarDatos()" title="Sincronizar ahora con Google Sheets" class="bg-white/10 hover:bg-white/20 border border-white/20 text-xs px-3 py-2 rounded-full flex items-center gap-2 transition">
+          <i id="syncIcon" class="fa-solid fa-rotate"></i>
+          <span id="connectionStatus">Conectando...</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTENEDOR PRINCIPAL -->
+  <main class="max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1">
+
+    <!-- COLUMNA IZQUIERDA: FILTROS + MENÚ DE 8 OPCIONES -->
+    <aside class="lg:col-span-4 xl:col-span-3 space-y-5 no-print">
+
+      <!-- TARJETA 1: FILTROS DE CONSULTA -->
+      <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-indigo-900 mb-4 flex items-center gap-2 border-b border-slate-100 pb-2">
+          <i class="fa-regular fa-calendar-check text-indigo-600"></i> Consultar Incidencia
+        </h2>
+
+        <div class="space-y-4">
+          <div>
+            <label for="selectDate" class="block text-xs font-semibold text-slate-600 mb-1">
+              Fecha de incidencia (Día a consultar)
+            </label>
+            <input type="date" id="selectDate" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
+          </div>
+
+          <div>
+            <label for="selectTeacher" class="block text-xs font-semibold text-slate-600 mb-1">
+              Docente (Específico o Global)
+            </label>
+            <select id="selectTeacher" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none">
+              <option value="ALL">Todos los docentes (Global)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- TARJETA 2: MENÚ INTERACTIVO DE OPCIONES -->
+      <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 px-2">
+          Opciones de Consulta y Registro
+        </h2>
+
+        <nav class="space-y-1.5" id="menuOptions">
+          <button data-view="1" class="menu-btn active w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold border border-transparent hover:bg-slate-50 text-slate-700 flex items-center gap-2.5 transition">
+            <i class="fa-solid fa-chalkboard-user text-indigo-600 w-4 text-center"></i>
+            <span>1. Grupos / clase por cubrir</span>
+          </button>
+
+          <button data-view="2" class="menu-btn w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold border border-transparent hover:bg-slate-50 text-slate-700 flex items-center gap-2.5 transition">
+            <i class="fa-solid fa-percent text-emerald-600 w-4 text-center"></i>
+            <span>2. % Asistencia diaria</span>
+          </button>
+
+          <button data-view="3" class="menu-btn w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold border border-transparent hover:bg-slate-50 text-slate-700 flex items-center gap-2.5 transition">
+            <i class="fa-solid fa-calendar-week text-blue-600 w-4 text-center"></i>
+            <span>3. % Asistencia semana concluida</span>
+          </button>
+
+          <button data-view="4" class="menu-btn w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold border border-transparent hover:bg-slate-50 text-slate-700 flex items-center gap-2.5 transition">
+            <i class="fa-solid fa-calendar-days text-purple-600 w-4 text-center"></i>
+            <span>4. % Asistencia mensual</span>
+          </button>
+
+          <hr class="my-2 border-slate-100">
+
+          <button data-view="5" class="menu-btn w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold border border-transparent hover:bg-slate-50 text-slate-700 flex items-center gap-2.5 transition">
+            <i class="fa-solid fa-chart-column text-amber-600 w-4 text-center"></i>
+            <span>5. Gráfico asistencia al día</span>
+          </button>
+
+          <button data-view="6" class="menu-btn w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold border border-transparent hover:bg-slate-50 text-slate-700 flex items-center gap-2.5 transition">
+            <i class="fa-solid fa-chart-simple text-cyan-600 w-4 text-center"></i>
+            <span>6. Gráfico semana concluida</span>
+          </button>
+
+          <button data-view="7" class="menu-btn w-full text-left px-3 py-2.5 rounded-xl text-xs font-semibold border border-transparent hover:bg-slate-50 text-slate-700 flex items-center gap-2.5 transition">
+            <i class="fa-solid fa-chart-bar text-pink-600 w-4 text-center"></i>
+            <span>7. Gráfico asistencia mensual</span>
+          </button>
+
+          <hr class="my-2 border-slate-100">
+
+          <button data-view="8" class="menu-btn w-full text-left px-3 py-3 rounded-xl text-xs font-bold border border-indigo-200 bg-indigo-50/70 hover:bg-indigo-100 text-indigo-800 flex items-center gap-2.5 transition">
+            <i class="fa-solid fa-circle-plus text-indigo-600 w-4 text-center text-sm"></i>
+            <span>8. Agregar incidencia docente</span>
+          </button>
+        </nav>
+      </div>
+    </aside>
+
+    <!-- COLUMNA DERECHA: ÁREA DINÁMICA DE RESULTADOS -->
+    <section class="lg:col-span-8 xl:col-span-9 print-full">
+      <div id="mainContentArea" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 min-h-[520px]">
+        <div class="flex flex-col items-center justify-center h-96 text-slate-400">
+          <i class="fa-solid fa-spinner fa-spin text-3xl text-indigo-500 mb-3"></i>
+          <p class="text-sm">Cargando información del plantel desde Google Sheets...</p>
+        </div>
       </div>
     </section>
 
   </main>
 
- <script>
-    // ============================================================
-    // REEMPLAZA ESTA VARIABLE CON EL ID DE TU HOJA DE GOOGLE SHEETS
-    // ============================================================
-    const SPREADSHEET_ID = "1Q_3wpX7wjTGaVgGs9-tVINVmnN1WA_Oy-D3iHwN_FzM"; // Tu ID entre comillas
+  <!-- SCRIPT PRINCIPAL -->
+  <script>
+    // =========================================================================
+    // 1. CONFIGURACIÓN DE CONEXIÓN A GOOGLE SHEETS / APPS SCRIPT
+    // =========================================================================
+    // Pega aquí la URL de tu Aplicación Web generada en Google Apps Script:
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbywLb4HSsK9kKDcazgJRyfpkKBoy1iuLdVlHvrJsEvphd6Kha20gkBGJnpVtDdtutMjqw/exec";
 
+    // Respaldo: Si aún no pegas la URL de Apps Script, puedes usar el ID de tu hoja para lectura:
+    const SPREADSHEET_ID = "1Q_3wpX7wjTGaVgGs9-tVINVmnN1WA_Oy-D3iHwN_FzM";
+
+    // =========================================================================
+    // 2. ESTADO GLOBAL DE LA APLICACIÓN
+    // =========================================================================
     let docentes = [];
     let cargaHoraria = [];
-    const diasSemana = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+    let incidencias = [];
+    let currentView = "1";
+    let chartInstance = null;
 
-    // Función compatible con archivos locales (file:///) mediante JSONP
-    function getSheetData(sheetName) {
+    const diasSemana = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+    const mesesNombres = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+
+    // =========================================================================
+    // 3. UTILIDADES DE FECHAS Y NORMALIZACIÓN
+    // =========================================================================
+    function parseLocalDate(dateStr) {
+      const [y, m, d] = dateStr.split("-").map(Number);
+      return new Date(y, m - 1, d);
+    }
+
+    function formatDateISO(dateObj) {
+      const y = dateObj.getFullYear();
+      const m = String(dateObj.getMonth() + 1).padStart(2, "0");
+      const d = String(dateObj.getDate()).padStart(2, "0");
+      return `${y}-${m}-${d}`;
+    }
+
+    function formatDateReadable(dateStr) {
+      const d = parseLocalDate(dateStr);
+      return `${diasSemana[d.getDay()]} ${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+    }
+
+    function normalizeSheetDate(val) {
+      if (!val) return "";
+      const str = String(val).trim();
+      if (/^\d{4}-\d{2}-\d{2}/.test(str)) return str.substring(0, 10);
+      // Formato Google gviz Date(YYYY,M,D)
+      const gvizMatch = str.match(/Date\((\d+),(\d+),(\d+)\)/);
+      if (gvizMatch) {
+        const y = gvizMatch[1];
+        const m = String(parseInt(gvizMatch[2]) + 1).padStart(2, "0");
+        const d = String(parseInt(gvizMatch[3])).padStart(2, "0");
+        return `${y}-${m}-${d}`;
+      }
+      // Formato DD/MM/YYYY
+      const slashMatch = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+      if (slashMatch) {
+        return `${slashMatch[3]}-${slashMatch[2].padStart(2, "0")}-${slashMatch[1].padStart(2, "0")}`;
+      }
+      return str;
+    }
+
+    // Obtener arreglo de fechas hábiles (Lunes a Viernes) de la semana concluida
+    function getConcludedWeekDates(refDateStr) {
+      const ref = parseLocalDate(refDateStr);
+      const day = ref.getDay(); // 0=Dom, 1=Lun ... 6=Sab
+      // Si es sábado (6) o domingo (0), la semana recién concluida es el lunes de esa misma semana
+      // Si es Lunes(1) a Viernes(5), la semana concluida es la semana anterior (-7 días)
+      const diffToMonday = day === 0 ? -6 : (day === 6 ? -5 : 1 - day - 7);
+      const monday = new Date(ref);
+      monday.setDate(ref.getDate() + diffToMonday);
+
+      const dates = [];
+      for (let i = 0; i < 5; i++) {
+        const d = new Date(monday);
+        d.setDate(monday.getDate() + i);
+        dates.push(formatDateISO(d));
+      }
+      return dates;
+    }
+
+    // Obtener arreglo de fechas hábiles (Lunes a Viernes) del mes consultado
+    function getMonthSchoolDates(refDateStr) {
+      const ref = parseLocalDate(refDateStr);
+      const year = ref.getFullYear();
+      const month = ref.getMonth();
+      const today = new Date();
+      const isCurrentMonth = (today.getFullYear() === year && today.getMonth() === month);
+      const lastDay = isCurrentMonth ? Math.max(ref.getDate(), today.getDate()) : new Date(year, month + 1, 0).getDate();
+
+      const dates = [];
+      for (let dayNum = 1; dayNum <= lastDay; dayNum++) {
+        const d = new Date(year, month, dayNum);
+        const dow = d.getDay();
+        if (dow >= 1 && dow <= 5) {
+          dates.push(formatDateISO(d));
+        }
+      }
+      return dates;
+    }
+
+    // =========================================================================
+    // 4. CARGA DE DATOS DESDE GOOGLE SHEETS
+    // =========================================================================
+    function getSheetDataJSONP(sheetName) {
       return new Promise((resolve, reject) => {
-        const callbackName = 'cb_' + Math.random().toString(36).substring(2, 9);
-        
-        window[callbackName] = function(data) {
-          delete window[callbackName];
+        const cb = "cb_" + Math.random().toString(36).substring(2, 9);
+        window[cb] = (data) => {
+          delete window[cb];
           document.body.removeChild(script);
           if (data && data.table && data.table.rows) {
-            const rows = data.table.rows.map(row => 
-              row.c ? row.c.map(cell => (cell && cell.v !== null && cell.v !== undefined) ? cell.v : "") : []
-            );
-            resolve(rows);
+            resolve(data.table.rows.map(r => r.c ? r.c.map(c => (c && c.v !== null && c.v !== undefined) ? c.v : "") : []));
           } else {
-            reject(new Error("Formato de respuesta no válido"));
+            resolve([]);
           }
         };
-
-        const script = document.createElement('script');
-        script.src = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=responseHandler:${callbackName}&sheet=${encodeURIComponent(sheetName)}`;
+        const script = document.createElement("script");
+        script.src = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=responseHandler:${cb}&sheet=${encodeURIComponent(sheetName)}&_=${Date.now()}`;
         script.onerror = () => {
-          delete window[callbackName];
+          delete window[cb];
           document.body.removeChild(script);
-          reject(new Error(`No se pudo cargar la pestaña ${sheetName}`));
+          reject(new Error("Error leyendo " + sheetName));
         };
         document.body.appendChild(script);
       });
     }
 
-    // Cargar datos al iniciar la aplicación
-    document.addEventListener("DOMContentLoaded", async () => {
-      document.getElementById("selectDate").valueAsDate = new Date();
-      const resultsContainer = document.getElementById("resultsContainer");
+    async function cargarDatos() {
+      const statusEl = document.getElementById("connectionStatus");
+      const syncIcon = document.getElementById("syncIcon");
+      syncIcon.classList.add("fa-spin");
+      statusEl.textContent = "Sincronizando...";
 
       try {
-        const [rawDocentes, rawHorarios] = await Promise.all([
-          getSheetData("Docentes"),
-          getSheetData("Horarios")
-        ]);
+        let rawDocentes = [], rawHorarios = [], rawIncidencias = [];
+
+        if (APPS_SCRIPT_URL && APPS_SCRIPT_URL.startsWith("http")) {
+          const resp = await fetch(`${APPS_SCRIPT_URL}?_=${Date.now()}`);
+          const data = await resp.json();
+          rawDocentes = data.docentes || [];
+          rawHorarios = data.horarios || [];
+          rawIncidencias = data.incidencias || [];
+          statusEl.textContent = "Conectado (Lectura/Escritura)";
+        } else {
+          const [dRes, hRes, iRes] = await Promise.all([
+            getSheetDataJSONP("Docentes"),
+            getSheetDataJSONP("Horarios"),
+            getSheetDataJSONP("Incidencias").catch(() => [])
+          ]);
+          rawDocentes = dRes;
+          rawHorarios = hRes;
+          rawIncidencias = iRes;
+          statusEl.textContent = "Conectado (Solo Lectura)";
+        }
 
         docentes = rawDocentes
-          .filter(row => row[0] && String(row[0]).toLowerCase() !== "id")
-          .map(row => ({ id: parseInt(row[0]), nombre: row[1] }));
+          .filter(r => r[0] && String(r[0]).toLowerCase() !== "id")
+          .map(r => ({ id: parseInt(r[0]), nombre: String(r[1]).trim() }));
 
         cargaHoraria = rawHorarios
-          .filter(row => row[0] && String(row[0]).toLowerCase() !== "docenteid")
-          .map(row => ({
-            docenteId: parseInt(row[0]),
-            dia: parseInt(row[1]),
-            modulo: String(row[2]),
-            grupo: String(row[3]),
-            asignatura: String(row[4]),
-            aula: String(row[5])
+          .filter(r => r[0] && String(r[0]).toLowerCase() !== "docenteid")
+          .map(r => ({
+            docenteId: parseInt(r[0]),
+            dia: parseInt(r[1]),
+            modulo: String(r[2]),
+            grupo: String(r[3]),
+            asignatura: String(r[4]),
+            aula: String(r[5])
           }));
 
-        const teacherSelect = document.getElementById("selectTeacher");
-        teacherSelect.innerHTML = '<option value="">-- Seleccionar docente --</option>';
-        docentes.forEach(d => {
-          const option = document.createElement("option");
-          option.value = d.id;
-          option.textContent = d.nombre;
-          teacherSelect.appendChild(option);
+        incidencias = rawIncidencias
+          .filter(r => r[0] && String(r[0]).toLowerCase() !== "id")
+          .map(r => ({
+            id: String(r[0]),
+            fecha: normalizeSheetDate(r[1]),
+            docenteId: parseInt(r[2]),
+            docenteNombre: String(r[3] || ""),
+            tipo: String(r[4] || "Injustificada"),
+            motivo: String(r[5] || "N/A"),
+            observaciones: String(r[6] || "")
+          }));
+
+        poblarSelectorDocentes();
+        renderActiveView();
+      } catch (err) {
+        console.error(err);
+        statusEl.textContent = "Error de conexión";
+        document.getElementById("mainContentArea").innerHTML = `
+          <div class="p-5 bg-red-50 border border-red-200 text-red-800 rounded-xl">
+            <h3 class="font-bold mb-1"><i class="fa-solid fa-triangle-exclamation mr-2"></i> No se pudo conectar con Google Sheets</h3>
+            <p class="text-xs">Verifica que pegaste correctamente la URL de Google Apps Script o el ID de tu hoja de cálculo en el archivo index.html.</p>
+          </div>`;
+      } finally {
+        syncIcon.classList.remove("fa-spin");
+      }
+    }
+
+    function poblarSelectorDocentes() {
+      const select = document.getElementById("selectTeacher");
+      const previousVal = select.value || "ALL";
+      select.innerHTML = '<option value="ALL">Todos los docentes (Global)</option>';
+      docentes.forEach(d => {
+        const opt = document.createElement("option");
+        opt.value = d.id;
+        opt.textContent = d.nombre;
+        select.appendChild(opt);
+      });
+      if ([...select.options].some(o => o.value === previousVal)) {
+        select.value = previousVal;
+      }
+    }
+
+    // =========================================================================
+    // 5. MOTOR DE CÁLCULO DE ASISTENCIA (DIARIA, SEMANAL, MENSUAL)
+    // =========================================================================
+    function calcularMetricasPeriodo(dateList, teacherFilter) {
+      const targetDocentes = teacherFilter === "ALL"
+        ? docentes
+        : docentes.filter(d => d.id === parseInt(teacherFilter));
+
+      let totalEsperadas = 0;
+      let totalFaltas = 0;
+      let faltasJustificadas = 0;
+      let faltasInjustificadas = 0;
+
+      const detallePorDocente = targetDocentes.map(doc => {
+        let esp = 0;
+        let fal = 0;
+        let just = 0;
+        let inj = 0;
+
+        dateList.forEach(fechaStr => {
+          const dow = parseLocalDate(fechaStr).getDay();
+          if (dow < 1 || dow > 5) return;
+
+          const clasesDia = cargaHoraria.filter(h => h.docenteId === doc.id && h.dia === dow).length;
+          esp += clasesDia;
+
+          const incDia = incidencias.find(inc => inc.docenteId === doc.id && inc.fecha === fechaStr);
+          if (incDia && clasesDia > 0) {
+            fal += clasesDia;
+            if (incDia.tipo.toLowerCase().includes("justificada") && !incDia.tipo.toLowerCase().includes("injustificada")) {
+              just += clasesDia;
+            } else {
+              inj += clasesDia;
+            }
+          }
         });
 
-        document.getElementById("searchBtn").disabled = false;
-        resultsContainer.innerHTML = '<p class="text-slate-400 text-center py-6">Selecciona una fecha y un docente para desplegar las asignaturas que quedaron sin atención.</p>';
+        const real = Math.max(0, esp - fal);
+        const pctAsis = esp > 0 ? ((real / esp) * 100) : 100;
+        const pctInasis = esp > 0 ? ((fal / esp) * 100) : 0;
 
-      } catch (error) {
-        console.error("Error al cargar Google Sheets:", error);
-        resultsContainer.innerHTML = `
-          <div class="p-4 bg-red-50 text-red-800 rounded-lg border border-red-200">
-            <i class="fa-solid fa-triangle-exclamation mr-2"></i> Error al conectar con Google Sheets. Verifica que el ID del documento sea correcto, que el acceso público esté en "Lector" y que las pestañas se llamen Docentes y Horarios.
-          </div>`;
-      }
-    });
+        totalEsperadas += esp;
+        totalFaltas += fal;
+        faltasJustificadas += just;
+        faltasInjustificadas += inj;
 
-    // Manejo de la consulta
-    document.getElementById("absenceForm").addEventListener("submit", (e) => {
-      e.preventDefault();
-      
-      const teacherSelect = document.getElementById("selectTeacher");
-      const teacherId = parseInt(teacherSelect.value);
-      const teacherName = teacherSelect.options[teacherSelect.selectedIndex].text;
-      const dateVal = document.getElementById("selectDate").value;
-      
-      const dateParts = dateVal.split("-");
-      const selectedDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
-      const dayOfWeek = selectedDate.getDay();
-
-      const dayName = diasSemana[dayOfWeek];
-      document.getElementById("dayLabel").textContent = `${dayName} (${dateVal})`;
-
-      document.getElementById("printDocenteInfo").textContent = `Docente ausente: ${teacherName}`;
-      document.getElementById("printFechaInfo").textContent = `Día/Fecha: ${dayName}, ${dateVal}`;
-
-      const resultsContainer = document.getElementById("resultsContainer");
-      const printBtn = document.getElementById("printBtn");
-      resultsContainer.innerHTML = "";
-
-      if (dayOfWeek === 0 || dayOfWeek === 6) {
-        if(printBtn) printBtn.classList.add("hidden");
-        resultsContainer.innerHTML = `
-          <div class="p-4 bg-amber-50 text-amber-800 rounded-lg border border-amber-200">
-            <i class="fa-solid fa-triangle-exclamation mr-2"></i> La fecha seleccionada corresponde a un fin de semana. No hay clases programadas.
-          </div>`;
-        return;
-      }
-
-      const afectadas = cargaHoraria.filter(h => h.docenteId === teacherId && h.dia === dayOfWeek);
-
-      if (afectadas.length === 0) {
-        if(printBtn) printBtn.classList.add("hidden");
-        resultsContainer.innerHTML = `
-          <div class="p-4 bg-emerald-50 text-emerald-800 rounded-lg border border-emerald-200">
-            <i class="fa-solid fa-circle-check mr-2"></i> El docente no tenía clases programadas registradas para los grupos en este día de la semana.
-          </div>`;
-        return;
-      }
-
-      if(printBtn) printBtn.classList.remove("hidden");
-
-      afectadas.forEach(item => {
-        const card = document.createElement("div");
-        card.className = "card-item flex items-center justify-between p-4 bg-red-50 border-l-4 border-red-500 rounded-r-lg shadow-sm mb-3";
-        card.innerHTML = `
-          <div>
-            <div class="flex items-center gap-2 mb-1">
-              <span class="font-bold text-red-900">${item.asignatura}</span>
-              <span class="text-xs bg-red-200 text-red-800 font-semibold px-2 py-0.5 rounded">${item.grupo}</span>
-            </div>
-            <p class="text-sm text-slate-600"><i class="fa-regular fa-clock mr-1"></i> ${item.modulo}</p>
-            <p class="text-xs text-slate-500"><i class="fa-solid fa-location-dot mr-1"></i> ${item.aula}</p>
-          </div>
-          <span class="text-xs font-semibold bg-white text-red-600 border border-red-200 px-3 py-1 rounded-full shadow-sm">
-            Sin Atención
-          </span>
-        `;
-        resultsContainer.appendChild(card);
+        return {
+          docenteId: doc.id,
+          nombre: doc.nombre,
+          esperadas: esp,
+          real: real,
+          faltas: fal,
+          justificadas: just,
+          injustificadas: inj,
+          pctAsistencia: Number(pctAsis.toFixed(1)),
+          pctInasistencia: Number(pctInasis.toFixed(1))
+        };
       });
+
+      const totalReal = Math.max(0, totalEsperadas - totalFaltas);
+      const globalPctAsistencia = totalEsperadas > 0 ? Number(((totalReal / totalEsperadas) * 100).toFixed(1)) : 100;
+      const globalPctInasistencia = totalEsperadas > 0 ? Number(((totalFaltas / totalEsperadas) * 100).toFixed(1)) : 0;
+
+      return {
+        esperadas: totalEsperadas,
+        real: totalReal,
+        faltas: totalFaltas,
+        justificadas: faltasJustificadas,
+        injustificadas: faltasInjustificadas,
+        pctAsistencia: globalPctAsistencia,
+        pctInasistencia: globalPctInasistencia,
+        detallePorDocente
+      };
+    }
+
+    // =========================================================================
+    // 6. RENDERIZADO DE LAS 8 VISTAS DEL MENÚ
+    // =========================================================================
+    function renderActiveView() {
+      if (chartInstance) {
+        chartInstance.destroy();
+        chartInstance = null;
+      }
+
+      const dateVal = document.getElementById("selectDate").value;
+      const teacherVal = document.getElementById("selectTeacher").value;
+      const container = document.getElementById("mainContentArea");
+
+      switch (currentView) {
+        case "1":
+          renderVistaCoberturas(container, dateVal, teacherVal);
+          break;
+        case "2":
+          renderVistaPorcentaje(container, "Porcentaje de Asistencia Diaria", `Día consultado: ${formatDateReadable(dateVal)}`, [dateVal], teacherVal);
+          break;
+        case "3": {
+          const weekDates = getConcludedWeekDates(dateVal);
+          const sub = `Semana concluida: ${formatDateReadable(weekDates[0])} al ${formatDateReadable(weekDates[4])}`;
+          renderVistaPorcentaje(container, "Porcentaje de Asistencia - Semana Concluida", sub, weekDates, teacherVal);
+          break;
+        }
+        case "4": {
+          const monthDates = getMonthSchoolDates(dateVal);
+          const dObj = parseLocalDate(dateVal);
+          const sub = `Mes consultado: ${mesesNombres[dObj.getMonth()]} ${dObj.getFullYear()} (${monthDates.length} días hábiles evaluados)`;
+          renderVistaPorcentaje(container, "Porcentaje de Asistencia Mensual", sub, monthDates, teacherVal);
+          break;
+        }
+        case "5":
+          renderVistaGrafico(container, "Gráfico de Asistencia al Día", `Comparativa del día: ${formatDateReadable(dateVal)}`, [dateVal], teacherVal);
+          break;
+        case "6": {
+          const weekDates = getConcludedWeekDates(dateVal);
+          const sub = `Semana concluida: ${formatDateReadable(weekDates[0])} al ${formatDateReadable(weekDates[4])}`;
+          renderVistaGrafico(container, "Gráfico de Asistencia - Semana Concluida", sub, weekDates, teacherVal);
+          break;
+        }
+        case "7": {
+          const monthDates = getMonthSchoolDates(dateVal);
+          const dObj = parseLocalDate(dateVal);
+          const sub = `Mes consultado: ${mesesNombres[dObj.getMonth()]} ${dObj.getFullYear()}`;
+          renderVistaGrafico(container, "Gráfico de Asistencia Mensual", sub, monthDates, teacherVal);
+          break;
+        }
+        case "8":
+          renderVistaAgregarIncidencia(container, dateVal, teacherVal);
+          break;
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // VISTA 1: GRUPOS / CLASES POR CUBRIR
+    // -------------------------------------------------------------------------
+    function renderVistaCoberturas(container, dateVal, teacherVal) {
+      const dateObj = parseLocalDate(dateVal);
+      const dow = dateObj.getDay();
+
+      if (dow === 0 || dow === 6) {
+        container.innerHTML = `
+          <div class="p-6 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl flex items-center gap-3">
+            <i class="fa-solid fa-calendar-xmark text-2xl"></i>
+            <div>
+              <h3 class="font-bold">Fin de semana seleccionado (${formatDateReadable(dateVal)})</h3>
+              <p class="text-xs">No hay clases programadas en días sábado o domingo.</p>
+            </div>
+          </div>`;
+        return;
+      }
+
+      // Modo Docente Específico
+      if (teacherVal !== "ALL") {
+        const doc = docentes.find(d => d.id === parseInt(teacherVal));
+        const clases = cargaHoraria.filter(h => h.docenteId === doc.id && h.dia === dow);
+        const incExistente = incidencias.find(i => i.docenteId === doc.id && i.fecha === dateVal);
+
+        let badgeHtml = `<span class="text-xs bg-amber-100 text-amber-800 px-3 py-1 rounded-full font-semibold">Simulación de cobertura (Sin falta registrada aún)</span>`;
+        if (incExistente) {
+          const esJust = incExistente.tipo === "Justificada";
+          badgeHtml = `<span class="text-xs ${esJust ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800'} px-3 py-1 rounded-full font-bold">
+            Falta Registrada: ${incExistente.tipo} ${incExistente.motivo !== "N/A" ? `(${incExistente.motivo})` : ""}
+          </span>`;
+        }
+
+        container.innerHTML = `
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4 mb-5">
+            <div>
+              <h2 class="text-lg font-bold text-slate-800">Grupos / Clases por Cubrir</h2>
+              <p class="text-xs text-slate-500">${doc.nombre} • <strong>${formatDateReadable(dateVal)}</strong></p>
+            </div>
+            <div class="flex items-center gap-2">
+              ${badgeHtml}
+              <button onclick="window.print()" class="no-print bg-slate-800 hover:bg-slate-700 text-white text-xs px-3 py-2 rounded-lg flex items-center gap-1.5">
+                <i class="fa-solid fa-print"></i> Imprimir
+              </button>
+            </div>
+          </div>
+          ${clases.length === 0 ? `
+            <div class="p-5 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-sm">
+              <i class="fa-solid fa-circle-check mr-2"></i> El docente no tiene grupos asignados los días ${diasSemana[dow]}.
+            </div>
+          ` : `
+            <div class="space-y-3">
+              ${clases.map(c => `
+                <div class="flex items-center justify-between p-4 bg-red-50/80 border-l-4 border-red-500 rounded-r-xl">
+                  <div>
+                    <div class="flex items-center gap-2 mb-1">
+                      <span class="font-bold text-red-950">${c.asignatura}</span>
+                      <span class="text-xs bg-red-200 text-red-900 font-bold px-2 py-0.5 rounded">${c.grupo}</span>
+                    </div>
+                    <p class="text-xs text-slate-600"><i class="fa-regular fa-clock mr-1"></i> ${c.modulo} &nbsp;|&nbsp; <i class="fa-solid fa-door-open mr-1"></i> ${c.aula}</p>
+                  </div>
+                  <span class="text-xs font-bold bg-white text-red-600 border border-red-200 px-3 py-1 rounded-full">Por Cubrir</span>
+                </div>
+              `).join("")}
+            </div>
+          `}`;
+        return;
+      }
+
+      // Modo Global ("Todos los docentes"): muestra todas las clases de los docentes con incidencia en esa fecha
+      const incsDelDia = incidencias.filter(i => i.fecha === dateVal);
+      let bloquesHtml = "";
+
+      if (incsDelDia.length === 0) {
+        bloquesHtml = `
+          <div class="p-8 text-center bg-emerald-50/70 border border-emerald-200 rounded-2xl text-emerald-800">
+            <i class="fa-solid fa-circle-check text-3xl mb-2 text-emerald-600"></i>
+            <h3 class="font-bold text-base">Sin inasistencias registradas en esta fecha</h3>
+            <p class="text-xs mt-1">Todos los docentes tienen asistencia completa el ${formatDateReadable(dateVal)}, o aún no se han capturado incidencias en la opción 8.</p>
+          </div>`;
+      } else {
+        bloquesHtml = incsDelDia.map(inc => {
+          const doc = docentes.find(d => d.id === inc.docenteId);
+          const nombreDoc = doc ? doc.nombre : inc.docenteNombre;
+          const clases = cargaHoraria.filter(h => h.docenteId === inc.docenteId && h.dia === dow);
+          return `
+            <div class="border border-slate-200 rounded-xl overflow-hidden mb-4">
+              <div class="bg-slate-800 text-white px-4 py-2.5 flex justify-between items-center">
+                <span class="font-bold text-sm"><i class="fa-solid fa-user-xmark mr-2 text-red-400"></i>${nombreDoc}</span>
+                <span class="text-xs bg-white/15 px-2.5 py-0.5 rounded-full">${inc.tipo} ${inc.motivo !== "N/A" ? `• ${inc.motivo}` : ""}</span>
+              </div>
+              <div class="p-3 bg-slate-50 space-y-2">
+                ${clases.length === 0 ? `<p class="text-xs text-slate-500">Sin grupos registrados este día.</p>` : clases.map(c => `
+                  <div class="flex justify-between items-center bg-white p-3 rounded-lg border-l-4 border-red-500 shadow-xs">
+                    <div>
+                      <span class="font-bold text-sm text-slate-800">${c.asignatura}</span>
+                      <span class="ml-2 text-xs bg-indigo-100 text-indigo-800 font-bold px-2 py-0.5 rounded">${c.grupo}</span>
+                      <p class="text-xs text-slate-500 mt-0.5"><i class="fa-regular fa-clock mr-1"></i>${c.modulo} • ${c.aula}</p>
+                    </div>
+                    <span class="text-xs font-semibold text-red-600">Sin Atención</span>
+                  </div>
+                `).join("")}
+              </div>
+            </div>`;
+        }).join("");
+      }
+
+      container.innerHTML = `
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4 mb-5">
+          <div>
+            <h2 class="text-lg font-bold text-slate-800">Concentrado Global de Grupos por Cubrir</h2>
+            <p class="text-xs text-slate-500">Fecha consultada: <strong>${formatDateReadable(dateVal)}</strong></p>
+          </div>
+          <button onclick="window.print()" class="no-print bg-slate-800 hover:bg-slate-700 text-white text-xs px-3 py-2 rounded-lg flex items-center gap-1.5 self-start">
+            <i class="fa-solid fa-print"></i> Imprimir Reporte
+          </button>
+        </div>
+        ${bloquesHtml}`;
+    }
+
+    // -------------------------------------------------------------------------
+    // VISTAS 2, 3 Y 4: PORCENTAJES DE ASISTENCIA (DIARIA, SEMANAL, MENSUAL)
+    // -------------------------------------------------------------------------
+    function renderVistaPorcentaje(container, titulo, subtitulo, dateList, teacherVal) {
+      const stats = calcularMetricasPeriodo(dateList, teacherVal);
+      const scopeLabel = teacherVal === "ALL"
+        ? "Todos los docentes (Global)"
+        : (docentes.find(d => d.id === parseInt(teacherVal))?.nombre || "");
+
+      container.innerHTML = `
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4 mb-6">
+          <div>
+            <h2 class="text-lg font-bold text-slate-800">${titulo}</h2>
+            <p class="text-xs text-slate-500">${subtitulo} • <strong>${scopeLabel}</strong></p>
+          </div>
+          <button onclick="window.print()" class="no-print bg-slate-800 hover:bg-slate-700 text-white text-xs px-3 py-2 rounded-lg flex items-center gap-1.5 self-start">
+            <i class="fa-solid fa-print"></i> Imprimir
+          </button>
+        </div>
+
+        <!-- TARJETAS KPI -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl">
+            <span class="text-xs font-semibold text-slate-500 uppercase">Asistencia Esperada</span>
+            <p class="text-2xl font-black text-slate-800 mt-1">${stats.esperadas}</p>
+            <span class="text-[11px] text-slate-400">Módulos programados</span>
+          </div>
+
+          <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-xl">
+            <span class="text-xs font-semibold text-emerald-700 uppercase">Asistencia Real</span>
+            <p class="text-2xl font-black text-emerald-700 mt-1">${stats.real}</p>
+            <span class="text-[11px] text-emerald-600">Módulos atendidos</span>
+          </div>
+
+          <div class="bg-red-50 border border-red-200 p-4 rounded-xl">
+            <span class="text-xs font-semibold text-red-700 uppercase">Inasistencias</span>
+            <p class="text-2xl font-black text-red-700 mt-1">${stats.faltas}</p>
+            <span class="text-[11px] text-red-600">Just: ${stats.justificadas} | Injust: ${stats.injustificadas}</span>
+          </div>
+
+          <div class="bg-indigo-600 text-white p-4 rounded-xl shadow-sm">
+            <span class="text-xs font-semibold text-indigo-200 uppercase">% Asistencia</span>
+            <p class="text-3xl font-black mt-1">${stats.pctAsistencia}%</p>
+            <span class="text-[11px] text-indigo-200">Inasistencia: ${stats.pctInasistencia}%</span>
+          </div>
+        </div>
+
+        <!-- BARRA VISUAL COMPARATIVA -->
+        <div class="mb-6 bg-slate-50 p-4 rounded-xl border border-slate-200">
+          <div class="flex justify-between text-xs font-bold mb-1.5">
+            <span class="text-emerald-700">Asistencia Real: ${stats.pctAsistencia}%</span>
+            <span class="text-red-600">Inasistencia: ${stats.pctInasistencia}%</span>
+          </div>
+          <div class="w-full h-4 bg-red-200 rounded-full overflow-hidden flex">
+            <div class="bg-emerald-500 h-full transition-all duration-500" style="width: ${stats.pctAsistencia}%"></div>
+          </div>
+        </div>
+
+        <!-- TABLA DESGLOSADA POR DOCENTE -->
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Desglose por Docente</h3>
+        <div class="overflow-x-auto border border-slate-200 rounded-xl">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-slate-100 text-slate-600 border-b border-slate-200">
+                <th class="py-2.5 px-3 font-bold">Docente</th>
+                <th class="py-2.5 px-3 font-bold text-center">Esperadas</th>
+                <th class="py-2.5 px-3 font-bold text-center">Reales</th>
+                <th class="py-2.5 px-3 font-bold text-center">Faltas</th>
+                <th class="py-2.5 px-3 font-bold text-center">% Asistencia</th>
+                <th class="py-2.5 px-3 font-bold text-center">% Inasistencia</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              ${stats.detallePorDocente.map(d => `
+                <tr class="hover:bg-slate-50">
+                  <td class="py-2.5 px-3 font-semibold text-slate-800">${d.nombre}</td>
+                  <td class="py-2.5 px-3 text-center">${d.esperadas}</td>
+                  <td class="py-2.5 px-3 text-center text-emerald-700 font-bold">${d.real}</td>
+                  <td class="py-2.5 px-3 text-center text-red-600 font-bold">${d.faltas}</td>
+                  <td class="py-2.5 px-3 text-center">
+                    <span class="px-2 py-0.5 rounded-full font-bold ${d.pctAsistencia >= 90 ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
+                      ${d.pctAsistencia}%
+                    </span>
+                  </td>
+                  <td class="py-2.5 px-3 text-center text-red-600 font-semibold">${d.pctInasistencia}%</td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        </div>`;
+    }
+
+    // -------------------------------------------------------------------------
+    // VISTAS 5, 6 Y 7: GRÁFICOS DE ASISTENCIA (DIARIO, SEMANAL, MENSUAL)
+    // -------------------------------------------------------------------------
+    function renderVistaGrafico(container, titulo, subtitulo, dateList, teacherVal) {
+      const stats = calcularMetricasPeriodo(dateList, teacherVal);
+      const scopeLabel = teacherVal === "ALL"
+        ? "Todos los docentes (Comparativa Global)"
+        : (docentes.find(d => d.id === parseInt(teacherVal))?.nombre || "");
+
+      container.innerHTML = `
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4 mb-5">
+          <div>
+            <h2 class="text-lg font-bold text-slate-800">${titulo}</h2>
+            <p class="text-xs text-slate-500">${subtitulo} • <strong>${scopeLabel}</strong></p>
+          </div>
+          <div class="flex gap-3 text-xs font-bold">
+            <span class="bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-lg">
+              Asistencia: ${stats.pctAsistencia}%
+            </span>
+            <span class="bg-red-50 text-red-700 border border-red-200 px-3 py-1.5 rounded-lg">
+              Inasistencia: ${stats.pctInasistencia}%
+            </span>
+          </div>
+        </div>
+
+        <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl">
+          <div class="relative h-[370px] w-full">
+            <canvas id="attendanceChart"></canvas>
+          </div>
+        </div>
+        <p class="text-[11px] text-slate-400 mt-3 text-center">
+          Comparación visual entre módulos esperados, asistencia real e inasistencias registradas en el periodo.
+        </p>`;
+
+      const ctx = document.getElementById("attendanceChart").getContext("2d");
+
+      // Si es "Todos", grafica comparativa por docente; si es 1 docente, grafica sus 3 indicadores
+      const labels = teacherVal === "ALL"
+        ? stats.detallePorDocente.map(d => d.nombre.replace(/^Prof(ra)?\.?\s+/i, ""))
+        : [scopeLabel];
+
+      const dataEsperada = stats.detallePorDocente.map(d => d.esperadas);
+      const dataReal = stats.detallePorDocente.map(d => d.real);
+      const dataFaltas = stats.detallePorDocente.map(d => d.faltas);
+
+      chartInstance = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: "Asistencia Esperada (Módulos)",
+              data: dataEsperada,
+              backgroundColor: "rgba(99, 102, 241, 0.75)",
+              borderColor: "rgb(79, 70, 229)",
+              borderWidth: 1,
+              borderRadius: 6
+            },
+            {
+              label: "Asistencia Real (Módulos)",
+              data: dataReal,
+              backgroundColor: "rgba(16, 185, 129, 0.8)",
+              borderColor: "rgb(5, 150, 105)",
+              borderWidth: 1,
+              borderRadius: 6
+            },
+            {
+              label: "Inasistencias (Módulos)",
+              data: dataFaltas,
+              backgroundColor: "rgba(239, 68, 68, 0.85)",
+              borderColor: "rgb(220, 38, 38)",
+              borderWidth: 1,
+              borderRadius: 6
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: "top" },
+            tooltip: {
+              callbacks: {
+                afterBody: function(items) {
+                  const idx = items[0].dataIndex;
+                  const item = stats.detallePorDocente[idx];
+                  if (!item) return "";
+                  return `\n% Asistencia: ${item.pctAsistencia}%\n% Inasistencia: ${item.pctInasistencia}%`;
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: "Cantidad de Módulos / Clases" }
+            }
+          }
+        }
+      });
+    }
+
+    // -------------------------------------------------------------------------
+    // VISTA 8: AGREGAR INCIDENCIA DOCENTE (JUSTIFICADA / INJUSTIFICADA)
+    // -------------------------------------------------------------------------
+    function renderVistaAgregarIncidencia(container, dateVal, teacherVal) {
+      const selectedDocId = teacherVal !== "ALL" ? teacherVal : (docentes[0]?.id || "");
+
+      container.innerHTML = `
+        <div class="border-b border-slate-100 pb-4 mb-5">
+          <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+            <i class="fa-solid fa-file-circle-plus text-indigo-600"></i> Agregar Incidencia Docente
+          </h2>
+          <p class="text-xs text-slate-500">Registra una falta justificada o injustificada para actualizar estadísticas y coberturas.</p>
+        </div>
+
+        <form id="formIncidencia" class="space-y-5 max-w-2xl">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Fecha de la Incidencia</label>
+              <input type="date" id="incFecha" value="${dateVal}" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm">
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Docente</label>
+              <select id="incDocente" required class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm bg-white">
+                ${docentes.map(d => `<option value="${d.id}" ${String(d.id) === String(selectedDocId) ? "selected" : ""}>${d.nombre}</option>`).join("")}
+              </select>
+            </div>
+          </div>
+
+          <!-- CLASIFICACIÓN DE LA FALTA -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-2">Clasificación de la Incidencia</label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <label class="flex items-center gap-3 p-3.5 border border-slate-200 rounded-xl cursor-pointer hover:bg-red-50/40 has-[:checked]:border-red-500 has-[:checked]:bg-red-50">
+                <input type="radio" name="incTipo" value="Injustificada" checked onchange="toggleMotivoJustificacion()" class="text-red-600 focus:ring-red-500">
+                <div>
+                  <span class="block text-sm font-bold text-slate-800">Injustificada</span>
+                  <span class="block text-[11px] text-slate-500">Falta sin documento justificante</span>
+                </div>
+              </label>
+
+              <label class="flex items-center gap-3 p-3.5 border border-slate-200 rounded-xl cursor-pointer hover:bg-blue-50/40 has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50">
+                <input type="radio" name="incTipo" value="Justificada" onchange="toggleMotivoJustificacion()" class="text-blue-600 focus:ring-blue-500">
+                <div>
+                  <span class="block text-sm font-bold text-slate-800">Justificada</span>
+                  <span class="block text-[11px] text-slate-500">Licencia médica o Día económico</span>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- SUB-OPCIONES DE JUSTIFICACIÓN (Licencia médica / Día económico) -->
+          <div id="motivoContainer" class="hidden p-4 bg-blue-50/70 border border-blue-200 rounded-xl">
+            <label class="block text-xs font-bold text-blue-900 mb-2">Motivo de Justificación</label>
+            <div class="flex flex-wrap gap-4">
+              <label class="flex items-center gap-2 text-sm font-semibold text-slate-700 cursor-pointer">
+                <input type="radio" name="incMotivo" value="Licencia médica" checked>
+                <span>Licencia médica</span>
+              </label>
+              <label class="flex items-center gap-2 text-sm font-semibold text-slate-700 cursor-pointer">
+                <input type="radio" name="incMotivo" value="Día económico">
+                <span>Día económico</span>
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Observaciones (Opcional)</label>
+            <input type="text" id="incObs" placeholder="Ej. Folio de incapacidad, cubre prefectura, etc." class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm">
+          </div>
+
+          <div class="pt-2 flex items-center gap-3">
+            <button type="submit" id="btnGuardarInc" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm px-6 py-3 rounded-xl shadow-sm transition flex items-center gap-2">
+              <i class="fa-solid fa-floppy-disk"></i> Guardar Incidencia
+            </button>
+            <span id="saveFeedback" class="text-xs font-semibold"></span>
+          </div>
+        </form>`;
+
+      document.getElementById("formIncidencia").addEventListener("submit", guardarIncidencia);
+    }
+
+    function toggleMotivoJustificacion() {
+      const tipo = document.querySelector('input[name="incTipo"]:checked').value;
+      const box = document.getElementById("motivoContainer");
+      if (tipo === "Justificada") {
+        box.classList.remove("hidden");
+      } else {
+        box.classList.add("hidden");
+      }
+    }
+
+    async function guardarIncidencia(e) {
+      e.preventDefault();
+      const btn = document.getElementById("btnGuardarInc");
+      const feedback = document.getElementById("saveFeedback");
+
+      const fecha = document.getElementById("incFecha").value;
+      const docenteId = parseInt(document.getElementById("incDocente").value);
+      const doc = docentes.find(d => d.id === docenteId);
+      const tipo = document.querySelector('input[name="incTipo"]:checked').value;
+      const motivo = tipo === "Justificada"
+        ? document.querySelector('input[name="incMotivo"]:checked').value
+        : "N/A";
+      const observaciones = document.getElementById("incObs").value.trim();
+
+      const nuevaInc = {
+        action: "addIncidencia",
+        id: String(Date.now()),
+        fecha,
+        docenteId,
+        docenteNombre: doc ? doc.nombre : "",
+        tipo,
+        motivo,
+        observaciones
+      };
+
+      btn.disabled = true;
+      btn.classList.add("opacity-50");
+      feedback.className = "text-xs font-semibold text-indigo-600";
+      feedback.textContent = "Guardando en Google Sheets...";
+
+      try {
+        if (APPS_SCRIPT_URL && APPS_SCRIPT_URL.startsWith("http")) {
+          await fetch(APPS_SCRIPT_URL, {
+            method: "POST",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(nuevaInc)
+          });
+        } else {
+          alert("Nota: Aún no has pegado tu APPS_SCRIPT_URL. La incidencia se mostrará temporalmente en esta sesión, pero debes configurar Google Apps Script para que se guarde permanentemente en Google Sheets.");
+        }
+
+        // Actualizar memoria local de inmediato
+        incidencias.push(nuevaInc);
+        document.getElementById("selectDate").value = fecha;
+        document.getElementById("selectTeacher").value = String(docenteId);
+
+        feedback.className = "text-xs font-bold text-emerald-600";
+        feedback.textContent = "✓ Incidencia registrada correctamente.";
+
+        setTimeout(() => {
+          activarOpcionMenu("1");
+        }, 900);
+      } catch (err) {
+        console.error(err);
+        feedback.className = "text-xs font-bold text-red-600";
+        feedback.textContent = "Error al guardar. Verifica tu conexión o URL de Apps Script.";
+      } finally {
+        btn.disabled = false;
+        btn.classList.remove("opacity-50");
+      }
+    }
+
+    // =========================================================================
+    // 7. EVENTOS DE NAVEGACIÓN Y FILTROS
+    // =========================================================================
+    function activarOpcionMenu(viewId) {
+      currentView = viewId;
+      document.querySelectorAll(".menu-btn").forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.view === viewId);
+      });
+      renderActiveView();
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      // Fecha inicial hoy
+      document.getElementById("selectDate").value = formatDateISO(new Date());
+
+      // Eventos de filtros
+      document.getElementById("selectDate").addEventListener("change", renderActiveView);
+      document.getElementById("selectTeacher").addEventListener("change", renderActiveView);
+
+      // Eventos del menú lateral
+      document.querySelectorAll(".menu-btn").forEach(btn => {
+        btn.addEventListener("click", () => activarOpcionMenu(btn.dataset.view));
+      });
+
+      cargarDatos();
     });
   </script>
 </body>
