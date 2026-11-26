@@ -33,10 +33,10 @@
   <header class="bg-gradient-to-r from-indigo-900 via-indigo-800 to-purple-900 text-white shadow-lg py-4 px-6">
     <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
       <div class="flex items-center gap-4">
-        <img src="escudo.png" alt="Escudo Secundaria 228" class="h-14 w-auto object-contain bg-white/10 p-1 rounded-lg" onerror="this.style.display='none'">
+        <img src="escudo.png" alt="Escudo Secundaria 228" class="h-16 w-auto object-contain bg-white/10 p-1 rounded-lg" onerror="this.style.display='none'">
         <div>
           <h1 class="text-lg md:text-2xl font-bold leading-tight">
-            Escuela Secundaria Diurna No. 228. "Edmundo O'Gorman"
+            Escuela Secundaria Diurna No. 228. <p"Edmundo O' Gorman"</p>
           </h1>
           <p class="text-indigo-100 text-xs md:text-sm italic font-medium">
             Jornada ampliada
@@ -296,7 +296,7 @@
           rawDocentes = data.docentes || [];
           rawHorarios = data.horarios || [];
           rawIncidencias = data.incidencias || [];
-          statusEl.textContent = "Conectado (Lectura/Escritura)";
+          statusEl.textContent = "Conectado";
         } else {
           const [dRes, hRes, iRes] = await Promise.all([
             getSheetDataJSONP("Docentes"),
