@@ -932,12 +932,17 @@
             <input type="text" id="incObs" placeholder="Ej. Folio de incapacidad, cubre prefectura, etc." class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm">
           </div>
 
-          <div class="pt-2 flex items-center gap-3">
-            <button type="submit" id="btnGuardarInc" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm px-6 py-3 rounded-xl shadow-sm transition flex items-center gap-2">
-              <i class="fa-solid fa-floppy-disk"></i> Guardar Incidencia
-            </button>
-            <span id="saveFeedback" class="text-xs font-semibold"></span>
-          </div>
+          <div class="flex flex-wrap items-center gap-3 pt-2">
+  <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs md:text-sm px-5 py-2.5 rounded-xl shadow-sm flex items-center gap-2 transition">
+    <i class="fa-solid fa-floppy-disk"></i>
+    <span>Guardar Incidencia</span>
+  </button>
+
+  <button type="button" onclick="activarOpcionMenu('1')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 font-bold text-xs md:text-sm px-5 py-2.5 rounded-xl flex items-center gap-2 transition">
+    <i class="fa-solid fa-xmark"></i>
+    <span>Cancelar</span>
+  </button>
+</div>
         </form>`;
 
       document.getElementById("formIncidencia").addEventListener("submit", guardarIncidencia);
